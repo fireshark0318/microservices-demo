@@ -49,6 +49,7 @@ spec:
       serviceAccountName: default
       {{- end }}
       terminationGracePeriodSeconds: 5
+      {{- if .Values.securityContext.enable }}
       securityContext:
         fsGroup: 1000
         runAsGroup: 1000
@@ -59,6 +60,7 @@ spec:
           type: {{ .Values.seccompProfile.type }}
         {{- end }}
       containers:
+      {{- end }}
       - name: server
         securityContext:
           allowPrivilegeEscalation: false
