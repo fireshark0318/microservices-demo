@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# [START cloudbuild_microservice_demo_cloudbuild]
+
 # This configuration file is used to build and deploy the app into a
 # GKE cluster using Google Cloud Build.
 #
@@ -25,7 +27,7 @@
 
 steps:
 - id: 'Deploy application to cluster'
-  name: 'gcr.io/k8s-skaffold/skaffold:v0.20.0'
+  name: 'gcr.io/k8s-skaffold/skaffold:v2.14.1'
   entrypoint: 'bash'
   args:
   - '-c'
@@ -37,3 +39,5 @@ steps:
 timeout: '3600s'
 options:
   machineType: 'N1_HIGHCPU_8'
+  
+# [END cloudbuild_microservice_demo_cloudbuild]
