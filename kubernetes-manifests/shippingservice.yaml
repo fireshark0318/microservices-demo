@@ -16,6 +16,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: shippingservice
+  labels:
+    app: shippingservice
 spec:
   selector:
     matchLabels:
@@ -25,42 +27,50 @@ spec:
       labels:
         app: shippingservice
     spec:
-      serviceAccountName: default
+      serviceAccountName: shippingservice
+      securityContext:
+        fsGroup: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+        runAsUser: 1000
       containers:
       - name: server
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+          privileged: false
+          readOnlyRootFilesystem: true
         image: shippingservice
         ports:
         - containerPort: 50051
         env:
         - name: PORT
           value: "50051"
-        - name: DISABLE_STATS
-          value: "1"
-        - name: DISABLE_TRACING
-          value: "1"
         - name: DISABLE_PROFILER
           value: "1"
-        # - name: JAEGER_SERVICE_ADDR
-        #   value: "jaeger-collector:14268"
         readinessProbe:
           periodSeconds: 5
-          exec:
-            command: ["/bin/grpc_health_probe", "-addr=:50051"]
+          grpc:
+            port: 50051
         livenessProbe:
-          exec:
-            command: ["/bin/grpc_health_probe", "-addr=:50051"]
+          grpc:
+            port: 50051
         resources:
           requests:
-            cpu: 100m
-            memory: 64Mi
+            cpu: 10m
+            memory: 10Mi
           limits:
-            cpu: 200m
-            memory: 128Mi
+            cpu: 30m
+            memory: 30Mi
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: shippingservice
+  labels:
+    app: shippingservice
 spec:
   type: ClusterIP
   selector:
@@ -69,3 +79,8 @@ spec:
   - name: grpc
     port: 50051
     targetPort: 50051
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: shippingservice

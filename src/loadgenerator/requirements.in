@@ -1,3 +1,2 @@
-locust==1.6.0
-requests==2.27.1
-urllib3==1.26.9
+locust==2.32.8
+faker==35.2.0
