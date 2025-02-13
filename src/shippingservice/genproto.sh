@@ -14,9 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#!/bin/bash -e
+# [START gke_shippingservice_genproto]
 
-PATH=$PATH:$GOPATH/bin
-protodir=../../pb
+PATH=$PATH:$(go env GOPATH)/bin
+protodir=../../protos
+outdir=./genproto
 
-protoc --go_out=plugins=grpc:genproto -I $protodir $protodir/demo.proto
+protoc --proto_path=$protodir --go_out=./$outdir --go_opt=paths=source_relative --go-grpc_out=./$outdir --go-grpc_opt=paths=source_relative $protodir/demo.proto
+
+# [END gke_shippingservice_genproto]

@@ -20,6 +20,7 @@ import os
 import sys
 import time
 import grpc
+import traceback
 from jinja2 import Environment, FileSystemLoader, select_autoescape, TemplateError
 from google.api_core.exceptions import GoogleAPICallError
 from google.auth.exceptions import DefaultCredentialsError
@@ -29,25 +30,16 @@ import demo_pb2_grpc
 from grpc_health.v1 import health_pb2
 from grpc_health.v1 import health_pb2_grpc
 
-from opencensus.trace.exporters import stackdriver_exporter
-from opencensus.trace.exporters import print_exporter
-from opencensus.trace.ext.grpc import server_interceptor
-from opencensus.common.transports.async_ import AsyncTransport
-from opencensus.trace.samplers import always_on
+from opentelemetry import trace
+from opentelemetry.instrumentation.grpc import GrpcInstrumentorServer
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 
-# import googleclouddebugger
 import googlecloudprofiler
 
 from logger import getJSONLogger
 logger = getJSONLogger('emailservice-server')
-
-# try:
-#     googleclouddebugger.enable(
-#         module='emailserver',
-#         version='1.0.0'
-#     )
-# except:
-#     pass
 
 # Loads confirmation email template from file
 env = Environment(
@@ -60,6 +52,10 @@ class BaseEmailService(demo_pb2_grpc.EmailServiceServicer):
   def Check(self, request, context):
     return health_pb2.HealthCheckResponse(
       status=health_pb2.HealthCheckResponse.SERVING)
+  
+  def Watch(self, request, context):
+    return health_pb2.HealthCheckResponse(
+      status=health_pb2.HealthCheckResponse.UNIMPLEMENTED)
 
 class EmailService(BaseEmailService):
   def __init__(self):
@@ -119,8 +115,7 @@ class HealthCheck():
       status=health_pb2.HealthCheckResponse.SERVING)
 
 def start(dummy_mode):
-  server = grpc.server(futures.ThreadPoolExecutor(max_workers=10),
-                       interceptors=(tracer_interceptor,))
+  server = grpc.server(futures.ThreadPoolExecutor(max_workers=10),)
   service = None
   if dummy_mode:
     service = DummyEmailService()
@@ -181,17 +176,23 @@ if __name__ == '__main__':
 
   # Tracing
   try:
-    if "DISABLE_TRACING" in os.environ:
-      raise KeyError()
-    else:
-      logger.info("Tracing enabled.")
-      sampler = always_on.AlwaysOnSampler()
-      exporter = stackdriver_exporter.StackdriverExporter(
-        project_id=os.environ.get('GCP_PROJECT_ID'),
-        transport=AsyncTransport)
-      tracer_interceptor = server_interceptor.OpenCensusServerInterceptor(sampler, exporter)
+    if os.environ["ENABLE_TRACING"] == "1":
+      otel_endpoint = os.getenv("COLLECTOR_SERVICE_ADDR", "localhost:4317")
+      trace.set_tracer_provider(TracerProvider())
+      trace.get_tracer_provider().add_span_processor(
+        BatchSpanProcessor(
+            OTLPSpanExporter(
+            endpoint = otel_endpoint,
+            insecure = True
+          )
+        )
+      )
+    grpc_server_instrumentor = GrpcInstrumentorServer()
+    grpc_server_instrumentor.instrument()
+
   except (KeyError, DefaultCredentialsError):
       logger.info("Tracing disabled.")
-      tracer_interceptor = server_interceptor.OpenCensusServerInterceptor()
-
+  except Exception as e:
+      logger.warn(f"Exception on Cloud Trace setup: {traceback.format_exc()}, tracing disabled.") 
+  
   start(dummy_mode = True)

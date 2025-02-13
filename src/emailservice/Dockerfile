@@ -12,38 +12,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM python:3.7-slim as base
+FROM --platform=$BUILDPLATFORM python:3.12.8-alpine@sha256:54bec49592c8455de8d5983d984efff76b6417a6af9b5dcc8d0237bf6ad3bd20 AS base
 
-FROM base as builder
+FROM base AS builder
 
-RUN apt-get -qq update \
-    && apt-get install -y --no-install-recommends \
-        g++ \
-    && rm -rf /var/lib/apt/lists/*
+RUN apk update \
+    && apk add --no-cache g++ linux-headers \
+    && rm -rf /var/cache/apk/*
 
 # get packages
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
-FROM base as final
+FROM base
 # Enable unbuffered logging
 ENV PYTHONUNBUFFERED=1
 # Enable Profiler
 ENV ENABLE_PROFILER=1
 
-RUN apt-get -qq update \
-    && apt-get install -y --no-install-recommends \
-        wget
-
-# Download the grpc health probe
-RUN GRPC_HEALTH_PROBE_VERSION=v0.3.6 && \
-    wget -qO/bin/grpc_health_probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-amd64 && \
-    chmod +x /bin/grpc_health_probe
+RUN apk update \
+    && apk add --no-cache libstdc++ \
+    && rm -rf /var/cache/apk/*
 
 WORKDIR /email_server
 
 # Grab packages from builder
-COPY --from=builder /usr/local/lib/python3.7/ /usr/local/lib/python3.7/
+COPY --from=builder /usr/local/lib/python3.12/ /usr/local/lib/python3.12/
 
 # Add the application
 COPY . .
