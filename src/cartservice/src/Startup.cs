@@ -27,20 +27,34 @@ namespace cartservice
         public void ConfigureServices(IServiceCollection services)
         {
             string redisAddress = Configuration["REDIS_ADDR"];
+            string spannerProjectId = Configuration["SPANNER_PROJECT"];
+            string spannerConnectionString = Configuration["SPANNER_CONNECTION_STRING"];
+            string alloyDBConnectionString = Configuration["ALLOYDB_PRIMARY_IP"];
+
             if (!string.IsNullOrEmpty(redisAddress))
             {
                 services.AddStackExchangeRedisCache(options =>
                 {
                     options.Configuration = redisAddress;
                 });
+                services.AddSingleton<ICartStore, RedisCartStore>();
+            }
+            else if (!string.IsNullOrEmpty(spannerProjectId) || !string.IsNullOrEmpty(spannerConnectionString))
+            {
+                services.AddSingleton<ICartStore, SpannerCartStore>();
+            }
+            else if (!string.IsNullOrEmpty(alloyDBConnectionString))
+            {
+                Console.WriteLine("Creating AlloyDB cart store");
+                services.AddSingleton<ICartStore, AlloyDBCartStore>();
             }
             else
             {
                 Console.WriteLine("Redis cache host(hostname+port) was not specified. Starting a cart service using in memory store");
                 services.AddDistributedMemoryCache();
+                services.AddSingleton<ICartStore, RedisCartStore>();
             }
 
-            services.AddSingleton<ICartStore, RedisCartStore>();
 
             services.AddGrpc();
         }
