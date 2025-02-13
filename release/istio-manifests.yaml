@@ -37,6 +37,18 @@ kind: HTTPRoute
 metadata:
   name: frontend-route
 spec:
+
+  hosts:
+  - "*"
+  gateways:
+  - frontend-gateway
+  http:
+  - route:
+    - destination:
+        host: frontend
+        port:
+          number: 80
+
   parentRefs:
   - name: istio-gateway
   rules:
@@ -45,7 +57,7 @@ spec:
         value: /
     backendRefs:
     - name: frontend
-      port: 80
+
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: ServiceEntry
@@ -93,4 +105,4 @@ spec:
         host: frontend
         port:
           number: 80
-# [END servicemesh_release_istio_manifests_microservices_demo]
+

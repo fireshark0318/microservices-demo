@@ -17,6 +17,7 @@ kind: Config
 metadata:
   name: app
 build:
+  platforms: ["linux/amd64", "linux/arm64"]
   artifacts:
   # image tags are relative; to specify an image repo (e.g. GCR), you
   # must provide a "default repo" using one of the methods described
@@ -28,6 +29,8 @@ build:
     context: src/productcatalogservice
   - image: recommendationservice
     context: src/recommendationservice
+  - image: shoppingassistantservice
+    context: src/shoppingassistantservice
   - image: shippingservice
     context: src/shippingservice
   - image: checkoutservice
@@ -47,7 +50,8 @@ build:
   tagPolicy:
     gitCommit: {}
   local:
-    useBuildkit: false
+    useDockerCLI: true
+    useBuildkit: true
 manifests:
   kustomize:
     paths:
@@ -69,7 +73,7 @@ profiles:
       diskSizeGb: 300
       machineType: N1_HIGHCPU_32
       timeout: 4000s
-# "debug" profile replaces the default Dockerfile in cartservice with Dockerfile.debug, 
+# "debug" profile replaces the default Dockerfile in cartservice with Dockerfile.debug,
 # which enables debugging via skaffold.
 #
 # This profile is used by default when running skaffold debug.
@@ -105,3 +109,10 @@ manifests:
   - ./kubernetes-manifests/loadgenerator.yaml
 deploy:
   kubectl: {}
+profiles:
+- name: gcb
+  build:
+    googleCloudBuild:
+      diskSizeGb: 300
+      machineType: N1_HIGHCPU_32
+      timeout: 4000s

@@ -31,15 +31,15 @@ jobs:
   code-tests:
     runs-on: [self-hosted, is-enabled]
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-dotnet@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-dotnet@v4
       env:
         DOTNET_INSTALL_DIR: "./.dotnet"
       with:
-        dotnet-version: '7.0'
-    - uses: actions/setup-go@v4
+        dotnet-version: '9.0'
+    - uses: actions/setup-go@v5
       with:
-        go-version: '1.19'
+        go-version: '1.23'
     - name: Go Unit Tests
       timeout-minutes: 10
       run: |
@@ -61,7 +61,7 @@ jobs:
         profile: ["local-code"]
       fail-fast: true
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Build + Deploy PR images to GKE
       timeout-minutes: 20
       run: |
@@ -70,7 +70,8 @@ jobs:
         echo "::set-env name=NAMESPACE::$NAMESPACE"
         echo "::set-env name=PR_NUMBER::$PR_NUMBER"
 
-        gcloud container clusters get-credentials $PR_CLUSTER --zone $ZONE --project $PROJECT_ID
+        yes | gcloud auth configure-docker us-docker.pkg.dev
+        gcloud container clusters get-credentials $PR_CLUSTER --region $REGION --project $PROJECT_ID
         cat <<EOF | kubectl apply -f -
         apiVersion: v1
         kind: Namespace
@@ -79,12 +80,12 @@ jobs:
         EOF
         echo Deploying application
         skaffold config set --global local-cluster false
-        skaffold run --default-repo=gcr.io/$PROJECT_ID/$GITHUB_REF --tag=$GITHUB_SHA --namespace=$NAMESPACE -p network-policies
+        skaffold run --default-repo=us-docker.pkg.dev/$PROJECT_ID/$GITHUB_REF --tag=$GITHUB_SHA --namespace=$NAMESPACE -p network-policies
       env:
         ACTIONS_ALLOW_UNSECURE_COMMANDS: true
         PROJECT_ID: "online-boutique-ci"
-        PR_CLUSTER: "online-boutique-prs"
-        ZONE: "us-central1-c"
+        PR_CLUSTER: "prs-gke-cluster"
+        REGION: "us-central1"
     - name: Wait For Pods
       timeout-minutes: 20
       run: |
