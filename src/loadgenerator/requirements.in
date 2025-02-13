@@ -1,1 +1,2 @@
-locust==1.2.3
+locust==2.32.8
+faker==35.2.0

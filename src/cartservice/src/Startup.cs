@@ -9,6 +9,7 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 using cartservice.cartstore;
 using cartservice.services;
+using Microsoft.Extensions.Caching.StackExchangeRedis;
 
 namespace cartservice
 {
@@ -26,23 +27,34 @@ namespace cartservice
         public void ConfigureServices(IServiceCollection services)
         {
             string redisAddress = Configuration["REDIS_ADDR"];
-            ICartStore cartStore = null;
+            string spannerProjectId = Configuration["SPANNER_PROJECT"];
+            string spannerConnectionString = Configuration["SPANNER_CONNECTION_STRING"];
+            string alloyDBConnectionString = Configuration["ALLOYDB_PRIMARY_IP"];
+
             if (!string.IsNullOrEmpty(redisAddress))
             {
-                cartStore = new RedisCartStore(redisAddress);
+                services.AddStackExchangeRedisCache(options =>
+                {
+                    options.Configuration = redisAddress;
+                });
+                services.AddSingleton<ICartStore, RedisCartStore>();
+            }
+            else if (!string.IsNullOrEmpty(spannerProjectId) || !string.IsNullOrEmpty(spannerConnectionString))
+            {
+                services.AddSingleton<ICartStore, SpannerCartStore>();
+            }
+            else if (!string.IsNullOrEmpty(alloyDBConnectionString))
+            {
+                Console.WriteLine("Creating AlloyDB cart store");
+                services.AddSingleton<ICartStore, AlloyDBCartStore>();
             }
             else
             {
-                Console.WriteLine("Redis cache host(hostname+port) was not specified. Starting a cart service using local store");
-                Console.WriteLine("If you wanted to use Redis Cache as a backup store, you should provide its address via command line or REDIS_ADDR environment variable.");
-                cartStore = new LocalCartStore();
+                Console.WriteLine("Redis cache host(hostname+port) was not specified. Starting a cart service using in memory store");
+                services.AddDistributedMemoryCache();
+                services.AddSingleton<ICartStore, RedisCartStore>();
             }
 
-            // Initialize the redis store
-            cartStore.InitializeAsync().GetAwaiter().GetResult();
-            Console.WriteLine("Initialization completed");
-
-            services.AddSingleton<ICartStore>(cartStore);
 
             services.AddGrpc();
         }
