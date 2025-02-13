@@ -14,17 +14,11 @@
 
 const path = require('path');
 const grpc = require('@grpc/grpc-js');
-const pino = require('pino');
 const protoLoader = require('@grpc/proto-loader');
 
 const charge = require('./charge');
 
-const logger = pino({
-  name: 'paymentservice-server',
-  messageKey: 'message',
-  changeLevelName: 'severity',
-  useLevelLabels: true
-});
+const logger = require('./logger')
 
 class HipsterShopServer {
   constructor(protoRoot, port = HipsterShopServer.PORT) {
@@ -64,7 +58,7 @@ class HipsterShopServer {
     const server = this.server 
     const port = this.port
     server.bindAsync(
-      `0.0.0.0:${port}`,
+      `[::]:${port}`,
       grpc.ServerCredentials.createInsecure(),
       function () {
         logger.info(`PaymentService gRPC server started on port ${port}`);

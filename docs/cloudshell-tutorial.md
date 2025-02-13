@@ -1,21 +1,18 @@
-# Online Boutique
+# Online Boutique quickstart
 
-##
-
-This tutorial shows you how to deploy the cloud-native microservices demo application **[Online Boutique](https://github.com/GoogleCloudPlatform/microservices-demo)** to a Kubernetes cluster.
+This tutorial shows you how to deploy **[Online Boutique](https://github.com/GoogleCloudPlatform/microservices-demo)** to a Kubernetes cluster.
 
 You'll be able to run Online Boutique on:
-
-- a free [minikube](https://minikube.sigs.k8s.io/docs/) cluster, which comes built in to the Cloud Shell instance
-- a [Google Kubernetes Engine](https://cloud.google.com/kubernetes-engine) cluster using a new or existing [Google Cloud Platform project](https://cloud.google.com/resource-manager/docs/creating-managing-projects#creating_a_project)
+- a local **[minikube](https://minikube.sigs.k8s.io/docs/)** cluster, which comes built in to the Cloud Shell instance
+- a **[Google Kubernetes Engine](https://cloud.google.com/kubernetes-engine)** cluster using a new or existing [Google Cloud project](https://cloud.google.com/resource-manager/docs/creating-managing-projects#creating_a_project)
 
 Let's get started!
+
 
 ## Kubernetes cluster setup
 
 Set up a Kubernetes cluster using the instructions below for either **minikube** or **GKE**.
 
----
 ### Minikube instructions
 
 Minikube creates a local Kubernetes cluster on Cloud Shell.
@@ -30,12 +27,9 @@ Minikube creates a local Kubernetes cluster on Cloud Shell.
 
 Once minikube has started, you're ready to move on to the next step. 
 
-
---- 
-
 ### GKE instructions
 
-In order to create a GKE cluster, you'll need to **[create a Google Cloud Platform project](https://cloud.google.com/resource-manager/docs/creating-managing-projects#creating_a_project)** or use an existing project.
+In order to create a GKE cluster, you'll need to **[create a Google Cloud project](https://cloud.google.com/resource-manager/docs/creating-managing-projects#creating_a_project)** or use an existing project.
 
 1. Access the command palette by going to **View > Find Command**.
 
@@ -81,7 +75,7 @@ To stop running the app:
 
 1. Go to the <walkthrough-editor-spotlight spotlightId="activity-bar-debug">Debug view</walkthrough-editor-spotlight> 
 
-2. Click the 'Stop' icon. 🟥
+2. Click the **Stop** icon.
 
 3. Select **Yes** to clean up deployed resources. 
 
@@ -89,7 +83,7 @@ You can start, stop, and debug apps from the Debug view.
 
 ### Clean up
 
-If you've deployed your app to a GKE cluster in your Google Cloud Platform project, you'll want to delete the cluster to avoid incurring charges.
+If you've deployed your app to a GKE cluster in your Google Cloud project, you'll want to delete the cluster to avoid incurring charges.
 
 1. Navigate to the <walkthrough-editor-spotlight spotlightId="activity-bar-cloud-k8s">Cloud Code - Kubernetes view</walkthrough-editor-spotlight> in the Activity bar.
 
@@ -107,9 +101,6 @@ Congratulations! You've successfully deployed Online Boutique using Cloud Shell.
 ##### What's next?
 
 Try other deployment options for Online Boutique:
-- **Workload Identity**: <walkthrough-editor-open-file filePath="./docs/workload-identity.md">See these instructions</walkthrough-editor-open-file>.
-- **Istio**: <walkthrough-editor-open-file filePath="./docs/service-mesh.md">See these instructions</walkthrough-editor-open-file>.
-- **Anthos Service Mesh**: ASM requires Workload Identity to be enabled in your GKE cluster. <walkthrough-editor-open-file filePath="./docs/workload-identity.md">See these instructions</walkthrough-editor-open-file> to configure and deploy the app. Then, use the <walkthrough-editor-open-file filePath="./docs/service-mesh.md">service mesh guide</walkthrough-editor-open-file>.
-- **Memorystore**: <walkthrough-editor-open-file filePath="./docs/memorystore.md">See these instructions</walkthrough-editor-open-file> to replace the in-cluster `redis` database with hosted Google Cloud Memorystore (redis).
+- **Istio/Cloud Service Mesh**: <walkthrough-editor-open-file filePath="./kustomize/components/service-mesh-istio/README.md">See these instructions</walkthrough-editor-open-file>.
 
 Learn more about the [Cloud Shell](https://cloud.google.com/shell) IDE environment and the [Cloud Code](https://cloud.google.com/code) extension.
