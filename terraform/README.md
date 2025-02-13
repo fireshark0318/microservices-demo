@@ -18,7 +18,7 @@ This page walks you through the steps required to deploy the [Online Boutique](h
 
 ## Prerequisites
 
-1. [Create a new project or use an existing project](https://cloud.google.com/resource-manager/docs/creating-managing-projects#console) on Google Cloud Platform (GCP), and ensure [billing is enabled](https://cloud.google.com/billing/docs/how-to/verify-billing-enabled) on the project.
+1. [Create a new project or use an existing project](https://cloud.google.com/resource-manager/docs/creating-managing-projects#console) on Google Cloud, and ensure [billing is enabled](https://cloud.google.com/billing/docs/how-to/verify-billing-enabled) on the project.
 
 ## Deploy the sample application
 
@@ -77,6 +77,16 @@ To avoid incurring charges to your Google Cloud account for the resources used i
 To remove the individual resources created for by Terraform without deleting the project:
 
 1. Navigate to the `terraform/` directory.
+
+1. Set `deletion_protection` to `false` for the `google_container_cluster` resource (GKE cluster).
+
+   ```bash
+   # Uncomment the line: "deletion_protection = false"
+   sed -i "s/# deletion_protection/deletion_protection/g" main.tf
+
+   # Re-apply the Terraform to update the state
+   terraform apply
+   ```
 
 1. Run the following command:
 

@@ -1,25 +1,24 @@
 # Development Guide 
 
-This doc explains how to build and run the OnlineBoutique source code locally using the `skaffold` command-line tool.  
+This doc explains how to build and run the Online Boutique source code locally using the `skaffold` command-line tool.  
 
-## Prerequisites 
+## Prerequisites
 
-- [Docker for Desktop](https://www.docker.com/products/docker-desktop).
-- kubectl (can be installed via `gcloud components install kubectl`)
+- [Docker for Desktop](https://www.docker.com/products/docker-desktop)
+- [kubectl](https://kubernetes.io/docs/tasks/tools/) (can be installed via `gcloud components install kubectl` for Option 1 - GKE)
 - [skaffold **2.0.2+**](https://skaffold.dev/docs/install/) (latest version recommended), a tool that builds and deploys Docker images in bulk. 
-- A Google Cloud Project with Google Container Registry enabled. 
-- Enable GCP APIs for Cloud Monitoring, Tracing, Profiler:
-```
-gcloud services enable monitoring.googleapis.com \
-    cloudtrace.googleapis.com \
-    cloudprofiler.googleapis.com
-```
-- [Minikube](https://minikube.sigs.k8s.io/docs/start/) (optional - see Local Cluster)
-- [Kind](https://kind.sigs.k8s.io/) (optional - see Local Cluster)
+- Clone the repository.
+    ```sh
+    git clone https://github.com/GoogleCloudPlatform/microservices-demo
+    cd microservices-demo/
+    ```
+- A Google Cloud project with Google Container Registry enabled. (for Option 1 - GKE)
+- [Minikube](https://minikube.sigs.k8s.io/docs/start/) (optional for Option 2 - Local Cluster)
+- [Kind](https://kind.sigs.k8s.io/) (optional for Option 2 - Local Cluster)
 
 ## Option 1: Google Kubernetes Engine (GKE)
 
-> 💡 Recommended if you're using Google Cloud Platform and want to try it on
+> 💡 Recommended if you're using Google Cloud and want to try it on
 > a realistic cluster. **Note**: If your cluster has Workload Identity enabled, 
 > [see these instructions](https://cloud.google.com/kubernetes-engine/docs/how-to/workload-identity#enable)
 
@@ -31,32 +30,37 @@ gcloud services enable monitoring.googleapis.com \
     ```
 
     ```sh
-    gcloud container clusters create demo --enable-autoupgrade \
-        --enable-autoscaling --min-nodes=3 --max-nodes=10 --num-nodes=5 --zone=us-central1-a
+    gcloud container clusters create-auto demo --region=us-central1
     ```
 
     ```
     kubectl get nodes
     ```
 
-2.  Enable Google Container Registry (GCR) on your GCP project and configure the
-    `docker` CLI to authenticate to GCR:
+2.  Enable Artifact Registry (AR) on your GCP project and configure the
+    `docker` CLI to authenticate to AR:
 
     ```sh
-    gcloud services enable containerregistry.googleapis.com
+    gcloud services enable artifactregistry.googleapis.com
     ```
 
     ```sh
-    gcloud auth configure-docker -q
+    gcloud artifacts repositories create microservices-demo \
+      --repository-format=docker \
+      --location=us \
     ```
 
-3.  In the root of this repository, run `skaffold run --default-repo=gcr.io/[PROJECT_ID]`,
+    ```sh
+    gcloud auth configure-docker -q 
+    ```
+
+3.  In the root of this repository, run `skaffold run --default-repo=us-docker.pkg.dev/[PROJECT_ID]/microservices-demo`,
     where [PROJECT_ID] is your GCP project ID.
 
     This command:
 
     - builds the container images
-    - pushes them to GCR
+    - pushes them to AR
     - applies the `./kubernetes-manifests` deploying the application to
       Kubernetes.
 
@@ -64,13 +68,14 @@ gcloud services enable monitoring.googleapis.com \
     Cloud Shell, you can build the images on Google Cloud Build: [Enable the
     Cloud Build
     API](https://console.cloud.google.com/flows/enableapi?apiid=cloudbuild.googleapis.com),
-    then run `skaffold run -p gcb --default-repo=gcr.io/[PROJECT_ID]` instead.
+    then run `skaffold run -p gcb --default-repo=us-docker.pkg.dev/[PROJECT_ID]/microservices-demo` instead.
 
 4.  Find the IP address of your application, then visit the application on your
     browser to confirm installation.
 
         kubectl get service frontend-external
 
+5.  Navigate to `http://EXTERNAL-IP` to access the web frontend.
 
 ## Option 2 - Local Cluster 
 

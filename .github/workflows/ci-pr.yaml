@@ -26,28 +26,30 @@ on:
       - 'helm-chart/**'
       - '.github/workflows/helm-chart-ci.yaml'
 
+# Ensure this workflow only runs for the most recent commit of a pull-request
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   code-tests:
     runs-on: [self-hosted, is-enabled]
     steps:
-    - uses: actions/checkout@v3
-      with:
-        ref: ${{github.event.pull_request.head.ref}}
-        repository: ${{github.event.pull_request.head.repo.full_name}}
-    - uses: actions/setup-dotnet@v3
+    - uses: actions/checkout@v4
+    - uses: actions/setup-dotnet@v4
       env:
         DOTNET_INSTALL_DIR: "./.dotnet"
       with:
-        dotnet-version: '7.0'
-    - uses: actions/setup-go@v4
+        dotnet-version: '9.0'
+    - uses: actions/setup-go@v5
       with:
-        go-version: '1.19'
+        go-version: '1.23'
     - name: Go Unit Tests
       timeout-minutes: 10
       run: |
-        for SERVICE in "shippingservice" "productcatalogservice"; do
-          echo "testing $SERVICE..."
-          pushd src/$SERVICE
+        for GO_PACKAGE in "shippingservice" "productcatalogservice" "frontend/validator"; do
+          echo "Testing $GO_PACKAGE..."
+          pushd src/$GO_PACKAGE
           go test
           popd
         done
@@ -55,6 +57,7 @@ jobs:
       timeout-minutes: 10
       run: |
         dotnet test src/cartservice/
+
   deployment-tests:
     runs-on: [self-hosted, is-enabled]
     needs: code-tests
@@ -63,17 +66,17 @@ jobs:
         profile: ["local-code"]
       fail-fast: true
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
-        ref: ${{github.event.pull_request.head.ref}}
-        repository: ${{github.event.pull_request.head.repo.full_name}}
+        ref: ${{github.event.pull_request.head.sha}}
     - name: Build + Deploy PR images to GKE
       timeout-minutes: 20
       run: |
         NAMESPACE="pr${PR_NUMBER}"
         echo "::set-env name=NAMESPACE::$NAMESPACE"
 
-        gcloud container clusters get-credentials $PR_CLUSTER --zone $ZONE --project $PROJECT_ID
+        yes | gcloud auth configure-docker us-docker.pkg.dev
+        gcloud container clusters get-credentials $PR_CLUSTER --region $REGION --project $PROJECT_ID
         cat <<EOF | kubectl apply -f -
         apiVersion: v1
         kind: Namespace
@@ -82,13 +85,13 @@ jobs:
         EOF
         echo Deploying application
         skaffold config set --global local-cluster false
-        skaffold run --default-repo=gcr.io/$PROJECT_ID/refs/pull/$PR_NUMBER --tag=$PR_NUMBER --namespace=$NAMESPACE -p network-policies
+        skaffold run --default-repo=us-docker.pkg.dev/$PROJECT_ID/refs/pull/$PR_NUMBER --tag=$PR_NUMBER --namespace=$NAMESPACE -p network-policies
       env:
         ACTIONS_ALLOW_UNSECURE_COMMANDS: true
         PR_NUMBER: ${{ github.event.pull_request.number }}
         PROJECT_ID: "online-boutique-ci"
-        PR_CLUSTER: "online-boutique-prs"
-        ZONE: "us-central1-c"
+        PR_CLUSTER: "prs-gke-cluster"
+        REGION: "us-central1"
     - name: Wait For Pods
       timeout-minutes: 20
       run: |
