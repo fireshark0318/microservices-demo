@@ -47,6 +47,7 @@ spec:
       {{- else }}
       serviceAccountName: default
       {{- end }}
+      {{- if .Values.securityContext.enable }}
       securityContext:
         fsGroup: 1000
         runAsGroup: 1000
@@ -56,6 +57,7 @@ spec:
         seccompProfile:
           type: {{ .Values.seccompProfile.type }}
         {{- end }}
+      {{- end }}
       {{- if eq .Values.opentelemetryCollector.projectId "PROJECT_ID" }}
       initContainers:
       # Init container retrieves the current cloud project id from the metadata server
@@ -69,7 +71,7 @@ spec:
               - ALL
           privileged: false
           readOnlyRootFilesystem: true
-        image: busybox:latest@sha256:3fbc632167424a6d997e74f52b878d7cc478225cffac6bc977eedfe51c7f4e79
+        image: busybox:latest@sha256:a5d0ce49aa801d475da48f8cb163c354ab95cab073cd3c138bd458fc8257fbf1
         command:
         - '/bin/sh'
         - '-c'
@@ -94,7 +96,7 @@ spec:
           readOnlyRootFilesystem: true
         args:
         - --config=/conf/collector-gateway-config.yaml
-        image: otel/opentelemetry-collector-contrib:0.89.0@sha256:995f17004231249d2c7d775849bf100b209508448919ca2077f8023ba49e3a95
+        image: otel/opentelemetry-collector-contrib:0.118.0@sha256:3f6274fe609da4f9964fbc2ef36b83d08d47964fbb11629251393590d3924072
         volumeMounts:
         - name: collector-gateway-config
           mountPath: /conf
